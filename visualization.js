@@ -1,14 +1,16 @@
 // set the dimensions and margins of the graph
+var div_width = document.getElementById("my_dataviz").clientWidth;
+var div_height = document.getElementById("my_dataviz").clientHeight;
 var margin = {top: 150, right: 50, bottom: 50, left: 50},
-width = 800 - margin.left - margin.right,
-height = 800 - margin.top - margin.bottom;
+width = div_width - margin.left - margin.right,
+height = div_height - margin.top - margin.bottom;
 
 // append the svg object to the body of the page
 var svg = d3.select("#my_dataviz")
 .append("svg")
 .attr("id", "main-svg")
-.attr("width", width + margin.left + margin.right)
-.attr("height", height + margin.top + margin.bottom)
+.attr("viewBox", "0 0 "+ div_width +" "+div_height)
+.attr("preserveAspectRatio", "xMinYMin meet")
 .append("g")
 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -35,7 +37,7 @@ d3.csv("data/p11_tree.csv", function(d) {
 function plotAxis(gazePointX, gazePointY) {
     // Add X axis
     x = d3.scaleLinear()
-    .domain([0, Math.max.apply(Math, gazePointX)])
+    .domain([0, 1280])
     .range([ 0 , width]);
     svg.append("g")
     .attr("transform", "translate(0," + height + ")")
@@ -43,7 +45,7 @@ function plotAxis(gazePointX, gazePointY) {
 
     // Add Y axis
     y = d3.scaleLinear()
-    .domain([0, Math.max.apply(Math, gazePointY)])
+    .domain([0, 1152])
     .range([ height, 0-100]);
     svg.append("g")
     .attr("transform", "translate(" + 0 + ", 0)")
@@ -69,7 +71,7 @@ function plotAll(gazePointX, gazePointY, timestamp, radius){
         .attr("fill", "#B2D4EF");
 
     for (var index=1; index<timestamp.length; index++) {
-        svg.append('line')
+        svg.append('line').lower()
             .attr("id", "lineId"+timestamp[index])
             .attr("stroke-width", 0.5)
             .style("visibility", "hidden")
@@ -103,8 +105,17 @@ function redraw_svg(curr_timestamp, timestamp, gazePointX, gazePointY, radius){
             break;
         }
     }
+    svg.select("#lastPointer").remove()
     svg.selectAll("circle").style("visibility", "visible").filter(function(d, i) {return i >= index;}).style("visibility", "hidden");
     svg.selectAll("line").style("visibility", "visible").filter(function(d, i) {return i >= index;}).style("visibility", "hidden");
+    svg.append("circle")
+        .attr("id", "lastPointer" )
+        .attr("cx", x(gazePointX[index]) )
+        .attr("cy", y(gazePointY[index]) )
+        .attr("r", radius[index])
+        .attr("stroke-width", 2)
+        .attr("stroke", "black")
+        .style("fill", "#FF0000")
     return index;
 }
 
