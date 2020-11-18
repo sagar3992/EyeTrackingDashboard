@@ -5,21 +5,75 @@
 <!-- Load d3.js -->
 <script src="https://d3js.org/d3.v4.js"></script>
 
+<form>
+  <select id="participant" onchange="fetchCSV();" onfocus="this.selectedIndex = -1;">
+      <option value="p1">Participant 1</option>
+      <option value="p2">Participant 2</option>
+      <option value="p3">Participant 3</option>
+      <option value="p4">Participant 4</option>
+      <option value="p5">Participant 5</option>
+      <option value="p6">Participant 6</option>      
+      <option value="p7">Participant 7</option>
+      <!-- <option value="p8">Participant 8</option> -->
+      <!-- <option value="p9">Participant 9</option> -->
+      <option value="p10">Participant 10</option>
+      <option value="p11">Participant 11</option>
+      <option value="p12">Participant 12</option>
+      <option value="p13">Participant 13</option>
+      <option value="p14">Participant 14</option>
+      <option value="p15">Participant 15</option>
+      <option value="p16">Participant 16</option>      
+      <option value="p17">Participant 17</option>
+      <option value="p18">Participant 18</option>
+      <option value="p19">Participant 19</option>
+      <option value="p20">Participant 20</option>
+      <option value="p21">Participant 21</option>
+      <!-- <option value="p22">Participant 22</option> -->
+      <option value="p23">Participant 23</option>
+      <option value="p24">Participant 24</option>
+      <option value="p25">Participant 25</option>
+      <!-- <option value="p26">Participant 26</option> -->
+      <option value="p27">Participant 27</option>
+      <option value="p28">Participant 28</option>
+      <!-- <option value="p29">Participant 29</option> -->
+      <option value="p30">Participant 30</option>
+      <option value="p31">Participant 31</option>
+      <option value="p32">Participant 32</option>
+      <option value="p33">Participant 33</option>
+      <option value="p34">Participant 34</option>
+      <option value="p35">Participant 35</option>
+      <option value="p36">Participant 36</option>      
+  </select>
+</form>
+
+<form>
+  <select id="treeOrGraph" onchange="fetchCSV();" onfocus="this.selectedIndex = -1;">
+      <option value='tree'>Tree</option>
+      <option value="graph">Graph</option>
+  </select>
+</form>
+
 <!-- Create a div where the graph will take place -->
-<div id="main" style="width: 70%; height:100vh; display: table; vertical-align:top">
+<div id="main" style="width: 90%; height:100vh; display: table; vertical-align:top">
   <div style="display: table-row; width:100%; border: solid 1px black;  vertical-align:top">
     <div id="my_dataviz" style="display: table-cell; width: 70%; border: solid 1px black; vertical-align:top"></div>
     <div id="parallel_viz_container" style="display: table; width:100%; border: solid 1px black;  vertical-align:top">
-      <div style="display: table-row; width:100%; border: solid 1px black; vertical-align:top"> 
+      <div style="display: table-row; height:33%; width:100%; border: solid 1px black; vertical-align:top">
         <div id="pupil_viz" style="display: table-cell; width: 100%; border: solid 1px black"> 
           efgh
         </div>
       </div>
-      <div style="display: table-row; height:50%; width:100%; border: solid 1px black; vertical-align:top">
+      <div style="display: table-row; height:33%; width:100%; border: solid 1px black; vertical-align:top">
         <div id="distance_viz" style="display: table-cell; width: 100%; border: solid 1px black; vertical-align:top"> 
           abcd 
         </div>
       </div>
+      <div style="display: table-row; height:33%; width:100%; border: solid 1px black; vertical-align:top">
+        <div id="data_viz" style="display: table-cell; width: 100%; border: solid 1px black; vertical-align:top"> 
+          stats 
+        </div>
+      </div>
+      
     </div>
   </div>
   <div id= "controller"> </div>
