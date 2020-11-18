@@ -11,8 +11,10 @@ var svg = d3.select("#my_dataviz")
 .attr("id", "main-svg")
 .attr("viewBox", "0 0 "+ div_width +" "+div_height)
 .attr("preserveAspectRatio", "xMinYMin meet")
+.style("display", "block")
 .append("g")
 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+d3.select("#main").style("height", "100%")
 
 var x, y;
 
@@ -40,6 +42,7 @@ function plotAxis(gazePointX, gazePointY) {
     .domain([0, 1280])
     .range([ 0 , width]);
     svg.append("g")
+    .style("font", "7px times")
     .attr("transform", "translate(0," + height + ")")
     .call(d3.axisBottom(x));
 
@@ -48,6 +51,7 @@ function plotAxis(gazePointX, gazePointY) {
     .domain([0, 1152])
     .range([ height, 0-100]);
     svg.append("g")
+    .style("font", "7px times")
     .attr("transform", "translate(" + 0 + ", 0)")
     .call(d3.axisLeft(y));
 }
@@ -139,7 +143,7 @@ async function renderMyVisualization() {
             timestamp.push(ratData[item].t);
         }
     }
-    radius = scale(radius, 1, 30);
+    radius = scale(radius, 1, 10);
     plotAxis(gazePointX, gazePointY);
     plotAll(gazePointX, gazePointY, timestamp, radius);
     
@@ -148,6 +152,7 @@ async function renderMyVisualization() {
         .attr("type", "range")
         .attr("min",  Math.min.apply(Math, timestamp))
         .attr("max", Math.max.apply(Math, timestamp))
+        .style("width", "100%")
         .attr("value", timestamp[0])
         .on("input", async function() { 
             sliderPressed = true;
@@ -197,3 +202,4 @@ async function renderMyVisualization() {
     });
 
 }
+
