@@ -111,7 +111,7 @@ function redraw_svg(curr_timestamp, timestamp, gazePointX, gazePointY, radius){
     }
     svg.select("#lastPointer").remove()
     svg.selectAll("circle").style("visibility", "visible").filter(function(d, i) {return i >= index;}).style("visibility", "hidden");
-    svg.selectAll("line").style("visibility", "visible").filter(function(d, i) {return i >= index;}).style("visibility", "hidden");
+    svg.selectAll("line").style("visibility", "visible").filter(function(d, i) {return i > index;}).style("visibility", "hidden");
     svg.append("circle")
         .attr("id", "lastPointer" )
         .attr("cx", x(gazePointX[index]) )
@@ -143,7 +143,7 @@ async function renderMyVisualization() {
             timestamp.push(ratData[item].t);
         }
     }
-    radius = scale(radius, 1, 10);
+    radius = scale(radius, 5, 10);
     plotAxis(gazePointX, gazePointY);
     plotAll(gazePointX, gazePointY, timestamp, radius);
     
