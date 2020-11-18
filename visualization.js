@@ -24,17 +24,35 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-d3.csv("data/p11_tree.csv", function(d) {
-    return {
-        t : +d.timestamp,
-        x : +d.gazepointX,
-        y : +d.gazepointY, // new field
-        r : +d.duration, // new field
-    };
-}, function(error, rows) {
-    ratData = rows;
-    renderMyVisualization();
-});
+function fetchCSV(){
+    
+    var file = selectInput();
+    d3.csv(file, function(d) {
+        return {
+            t : +d.timestamp,
+            x : +d.gazepointX,
+            y : +d.gazepointY, // new field
+            r : +d.duration, // new field
+        };
+    }, async function(error, rows) {
+        ratData = rows;
+        sliderPressed = true;
+        await sleep(300);
+        clear();
+        d3.select('#main-svg').exit();
+        svg.selectAll("*").remove();
+        d3.select("#controller").selectAll("input").remove();
+        renderMyVisualization();
+    });
+}
+
+function selectInput()
+{
+    var participant = document.getElementById("participant").value;
+    var treeOrGraph = document.getElementById("treeOrGraph").value;
+    console.log("data/".concat(participant,"_",treeOrGraph,".csv"));
+    return "data/".concat(participant,"_",treeOrGraph,".csv");
+}
 
 function plotAxis(gazePointX, gazePointY) {
     // Add X axis
