@@ -89,6 +89,7 @@ function selectInput()
 
 function display_stats()
 {
+    d3.select("#stats").selectAll("span").remove()
     console.log(statsData);
     for(var columnIndex in statsData) {
         d3.select("#stats").append("span").style("font", "7px times").text(columnIndex + " : " + statsData[columnIndex] + ". ");
@@ -115,10 +116,10 @@ function plotAxis(gazePointX, gazePointY) {
     .call(d3.axisLeft(y));
 }
 
-function plotAll(gazePointX, gazePointY, timestamp, radius){
+function plotAll(gazePointX, gazePointY, timestamp, avg_pupil, radius){
     var plotData = [];
     for(var j = 0; j<timestamp.length; j++) {
-        plotData.push( {t : timestamp[j], x : gazePointX[j], y: gazePointY[j], r: radius[j]} )
+        plotData.push( {t : timestamp[j], x : gazePointX[j], y: gazePointY[j], r: radius[j], p: avg_pupil[j]} )
     }
     svg.selectAll("dot").raise()
         .data(plotData)
@@ -131,7 +132,9 @@ function plotAll(gazePointX, gazePointY, timestamp, radius){
         .attr("stroke-width", 0.5)
         .attr("stroke", "black")
         .style("visibility", "hidden")
-        .attr("fill", "#B2D4EF");
+        .attr("fill", "#B2D4EF")
+        .append("svg:title")
+        .text(function(d) { return "X: " + d.x.toFixed(2) + "\nY: " + d.y.toFixed(2) + "\nDuration: " + d.r.toFixed(2) + "\nPupil size: " + d.p.toFixed(2); });
 
     for (var index=timestamp.length-1; index>0; index--) {
         svg.append('line').lower()
@@ -211,7 +214,7 @@ async function renderMyVisualization() {
     radius = scale(radius, 5, 10);
     avg_pupil = scale(avg_pupil, Math.min(pupil_viz_height,pupil_viz_width)/150, Math.min(pupil_viz_height,pupil_viz_width)/5);
     plotAxis(gazePointX, gazePointY);
-    plotAll(gazePointX, gazePointY, timestamp, radius);
+    plotAll(gazePointX, gazePointY, timestamp, avg_pupil, radius);
     
     // add a slider
     var slider = d3.select("#controller").append("input")
@@ -263,6 +266,8 @@ async function renderMyVisualization() {
             .attr("stroke-width", 2)
             .attr("stroke", "black")
             .style("fill", "#FF0000")
+            .append("svg:title")
+            .text(function(d) { return "X: " + d.x + " Y: " + d.y + " Duration: " + d.r; });
         svg_pupil.select("#external-eye").style("visibility", "visible")
         pupil.style("visibility", "visible")
         var prevT = null;
