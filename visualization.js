@@ -31,6 +31,7 @@ var sliderPressed = false;
 
 //Read the data
 var ratData = [];
+var statsData = [];
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -58,6 +59,24 @@ function fetchCSV(){
         d3.select("#controller").selectAll("input").remove();
         renderMyVisualization();
     });
+    var participant = document.getElementById("participant").value;
+    d3.csv("data/participant\ overall\ stats.csv", function(d) {
+        var headerNames = Object.keys(d);
+        var result = {};
+        for(let column in headerNames) {
+            result[headerNames[column]] = d[headerNames[column]];
+        }
+        return result;
+    }, async function(error, rows) {
+        console.log(participant);
+        for(let i in rows) {
+            if(rows[i]["participant"] == participant){ 
+                statsData = rows[i]; 
+            }
+        }
+        display_stats();
+    });
+    
 }
 
 function selectInput()
@@ -66,6 +85,14 @@ function selectInput()
     var treeOrGraph = document.getElementById("treeOrGraph").value;
     console.log("data/".concat(participant,"_",treeOrGraph,".csv"));
     return "data/".concat(participant,"_",treeOrGraph,".csv");
+}
+
+function display_stats()
+{
+    console.log(statsData);
+    for(var columnIndex in statsData) {
+        d3.select("#stats").append("span").style("font", "7px times").text(columnIndex + " : " + statsData[columnIndex] + ". ");
+    }
 }
 
 function plotAxis(gazePointX, gazePointY) {
