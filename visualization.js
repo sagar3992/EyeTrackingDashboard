@@ -116,10 +116,10 @@ function plotAxis(gazePointX, gazePointY) {
     .call(d3.axisLeft(y));
 }
 
-function plotAll(gazePointX, gazePointY, timestamp, avg_pupil, radius){
+function plotAll(gazePointX, gazePointY, timestamp, unscaled_avg_pupil, radius, unscaled_radius){
     var plotData = [];
     for(var j = 0; j<timestamp.length; j++) {
-        plotData.push( {t : timestamp[j], x : gazePointX[j], y: gazePointY[j], r: radius[j], p: avg_pupil[j]} )
+        plotData.push( {t : timestamp[j], x : gazePointX[j], y: gazePointY[j], r: radius[j], ur: unscaled_radius[j],  p: unscaled_avg_pupil[j]} )
     }
     svg.selectAll("dot").raise()
         .data(plotData)
@@ -134,7 +134,7 @@ function plotAll(gazePointX, gazePointY, timestamp, avg_pupil, radius){
         .style("visibility", "hidden")
         .attr("fill", "#B2D4EF")
         .append("svg:title")
-        .text(function(d) { return "X: " + d.x.toFixed(2) + "\nY: " + d.y.toFixed(2) + "\nDuration: " + d.r.toFixed(2) + "\nPupil size: " + d.p.toFixed(2); });
+        .text(function(d) { return "X: " + d.x.toFixed(2) + "\nY: " + d.y.toFixed(2) + "\nDuration: " + parseFloat(d.ur).toFixed(4) + "ms\nPupil size: " + d.p.toFixed(2); });
 
     for (var index=timestamp.length-1; index>0; index--) {
         svg.append('line').lower()
@@ -196,25 +196,25 @@ function clear() {
 }
 
 async function renderMyVisualization() {
-    var radius = [];
+    var unscaled_radius = [];
     var gazePointX = [];
     var gazePointY = [];
     var timestamp = [];
-    var avg_pupil = [];
+    var unscaled_avg_pupil = [];
     sliderPressed = false;
     for (let item in ratData) {
         if(ratData[item].x != null || ratData[item].y != null || ratData[item].r != null) {
-            radius.push(ratData[item].r);
+            unscaled_radius.push(ratData[item].r);
             gazePointX.push(ratData[item].x);
             gazePointY.push(ratData[item].y);
             timestamp.push(ratData[item].t);
-            avg_pupil.push(ratData[item].p);
+            unscaled_avg_pupil.push(ratData[item].p);
         }
     }
-    radius = scale(radius, 5, 10);
-    avg_pupil = scale(avg_pupil, Math.min(pupil_viz_height,pupil_viz_width)/150, Math.min(pupil_viz_height,pupil_viz_width)/5);
+    var radius = scale(unscaled_radius, 5, 10);
+    var avg_pupil = scale(unscaled_avg_pupil, Math.min(pupil_viz_height,pupil_viz_width)/150, Math.min(pupil_viz_height,pupil_viz_width)/5);
     plotAxis(gazePointX, gazePointY);
-    plotAll(gazePointX, gazePointY, timestamp, avg_pupil, radius);
+    plotAll(gazePointX, gazePointY, timestamp, unscaled_avg_pupil, radius, unscaled_radius);
     
     // add a slider
     var slider = d3.select("#controller").append("input")
