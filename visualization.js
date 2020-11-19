@@ -14,9 +14,20 @@ var svg = d3.select("#my_dataviz")
 .style("display", "block")
 .append("g")
 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-d3.select("#main").style("height", "100%")
+d3.select("#main").style("height", "100%");
+d3.select("#parallel_viz_container").style("height", "100%");
+
+var pupil_viz_width = document.getElementById("pupil_viz").clientWidth;
+var pupil_viz_height = document.getElementById("pupil_viz").clientHeight;
+var svg_pupil = d3.select("#pupil_viz")
+.append("svg")
+.attr("id", "pupil-svg")
+.attr("viewBox", "0 0 "+ pupil_viz_width +" "+ pupil_viz_height)
+.attr("preserveAspectRatio", "xMinYMin meet")
+.style("display", "block")
 
 var x, y;
+var sliderPressed = false;
 
 //Read the data
 var ratData = [];
@@ -33,6 +44,7 @@ function fetchCSV(){
             x : +d.gazepointX,
             y : +d.gazepointY, // new field
             r : +d.duration, // new field
+            p : +d.avg_pupil
         };
     }, async function(error, rows) {
         ratData = rows;
@@ -40,6 +52,8 @@ function fetchCSV(){
         await sleep(300);
         clear();
         d3.select('#main-svg').exit();
+        svg_pupil.select("*").remove();
+        d3.select("#pupil").remove()
         svg.selectAll("*").remove();
         d3.select("#controller").selectAll("input").remove();
         renderMyVisualization();
@@ -92,7 +106,7 @@ function plotAll(gazePointX, gazePointY, timestamp, radius){
         .style("visibility", "hidden")
         .attr("fill", "#B2D4EF");
 
-    for (var index=1; index<timestamp.length; index++) {
+    for (var index=timestamp.length-1; index>0; index--) {
         svg.append('line').lower()
             .attr("id", "lineId"+timestamp[index])
             .attr("stroke-width", 0.5)
@@ -118,7 +132,7 @@ function scale(arr, minEl, maxEl) {
   return result;
 }
 
-function redraw_svg(curr_timestamp, timestamp, gazePointX, gazePointY, radius){
+function redraw_svg(curr_timestamp, timestamp, gazePointX, gazePointY, radius, avg_pupil){
     var index=0;
     svg.exit();
     for(var j = 0; j<timestamp.length; j++) {
@@ -127,9 +141,11 @@ function redraw_svg(curr_timestamp, timestamp, gazePointX, gazePointY, radius){
             break;
         }
     }
+    svg_pupil.select("#external-eye").attr("visibility", "visible")
+    d3.select("#pupil").style("visibility", "visible").attr("r", avg_pupil[index])
     svg.select("#lastPointer").remove()
     svg.selectAll("circle").style("visibility", "visible").filter(function(d, i) {return i >= index;}).style("visibility", "hidden");
-    svg.selectAll("line").style("visibility", "visible").filter(function(d, i) {return i > index;}).style("visibility", "hidden");
+    svg.selectAll("line").style("visibility", "visible").filter(function(d, i) {return i >= index;}).style("visibility", "hidden");
     svg.append("circle")
         .attr("id", "lastPointer" )
         .attr("cx", x(gazePointX[index]) )
@@ -142,6 +158,8 @@ function redraw_svg(curr_timestamp, timestamp, gazePointX, gazePointY, radius){
 }
 
 function clear() {
+    svg.exit()
+    d3.select("#pupil").style("visibility", "hidden")
     svg.selectAll("*").exit()
     svg.selectAll("circle").style("visibility", "hidden")
     svg.selectAll("line").style("visibility", "hidden")
@@ -152,16 +170,19 @@ async function renderMyVisualization() {
     var gazePointX = [];
     var gazePointY = [];
     var timestamp = [];
-    var sliderPressed = false;
+    var avg_pupil = [];
+    sliderPressed = false;
     for (let item in ratData) {
         if(ratData[item].x != null || ratData[item].y != null || ratData[item].r != null) {
             radius.push(ratData[item].r);
             gazePointX.push(ratData[item].x);
             gazePointY.push(ratData[item].y);
             timestamp.push(ratData[item].t);
+            avg_pupil.push(ratData[item].p);
         }
     }
     radius = scale(radius, 5, 10);
+    avg_pupil = scale(avg_pupil, Math.min(pupil_viz_height,pupil_viz_width)/150, Math.min(pupil_viz_height,pupil_viz_width)/5);
     plotAxis(gazePointX, gazePointY);
     plotAll(gazePointX, gazePointY, timestamp, radius);
     
@@ -172,15 +193,33 @@ async function renderMyVisualization() {
         .attr("max", Math.max.apply(Math, timestamp))
         .style("width", "100%")
         .attr("value", timestamp[0])
-        .on("input", async function() { 
+        .on("input", function() { 
             sliderPressed = true;
             d3.select('#main-svg').exit();
-            redraw_svg(this.value, timestamp, gazePointX, gazePointY, radius); // this has the value of the slider
+            d3.select("#controller").select("input").attr("value", this.value);
+            redraw_svg(this.value, timestamp, gazePointX, gazePointY, radius, avg_pupil); // this has the value of the slider
         });
+    // add a external eye 
+    svg_pupil.append("circle").attr("id", "external-eye")
+    .attr("r", Math.min(pupil_viz_height,pupil_viz_width)/2)
+    .attr("cx", pupil_viz_width/2 )
+    .attr("cy", pupil_viz_height/2 )
+    .attr("stroke-width", 2)
+    .attr("stroke", "black")
+    .attr("fill", "None")
+    .attr("visibility", "hidden")
+
+    var pupil = svg_pupil.append("circle")
+    .attr("id", "pupil")
+    .attr("r", avg_pupil[0])
+    .attr("cx", pupil_viz_width/2 )
+    .attr("cy", pupil_viz_height/2 )
+    .attr("fill", "black")
+    .attr("visibility", "hidden")
     
     d3.select("#transition").on("click", async function() {
         sliderPressed = true;
-        await sleep(300);
+        await sleep(500);
         clear();
         plotAxis(gazePointX, gazePointY);
         sliderPressed = false;
@@ -197,12 +236,18 @@ async function renderMyVisualization() {
             .attr("stroke-width", 2)
             .attr("stroke", "black")
             .style("fill", "#FF0000")
+        svg_pupil.select("#external-eye").style("visibility", "visible")
+        pupil.style("visibility", "visible")
         var prevT = null;
         var i = 0;
         for (let item of ratData){
             if(sliderPressed){
                 break;
             }
+            pupil.transition()
+                .duration(item.r)
+                .attr("r", avg_pupil[i])
+            d3.select("#controller").select("input").attr("value", timestamp[i]);
             circle.raise()
                 .transition()
                 .duration(item.r)
