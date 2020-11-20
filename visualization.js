@@ -26,7 +26,25 @@ var svg_pupil = d3.select("#pupil_viz")
 .attr("preserveAspectRatio", "xMinYMin meet")
 .style("display", "block")
 
-var x, y;
+// set the dimensions and margins of the graph
+var div_width_distance = document.getElementById("distance_viz").clientWidth;
+var div_height_distance = document.getElementById("distance_viz").clientHeight;
+var margin_distance = {top: 0, right: 0, bottom: 0, left: 0},
+width_distance = div_width_distance - margin_distance.left - margin_distance.right,
+height_distance = div_height_distance - margin_distance.top - margin_distance.bottom;
+
+// append the svg object to the body of the page
+var svg_distance = d3.select("#distance_viz")
+.append("svg")
+.attr("id", "main-svg-distance")
+.attr("viewBox", "0 0 "+ div_width_distance +" "+div_height_distance)
+.attr("preserveAspectRatio", "xMinYMin meet")
+.style("display", "block")
+.append("g")
+.attr("transform", "translate(" + margin_distance.left + "," + margin_distance.top + ")");
+
+
+var x, y, x_distance, y_distance;
 var line = d3.line().curve(d3.curveLinearClosed);
 var sliderPressed = false;
 
@@ -46,6 +64,7 @@ function fetchCSV(){
             x : +d.gazepointX,
             y : +d.gazepointY, // new field
             r : +d.duration, // new field
+            distance: +d.avg_distance,
             p : +d.avg_pupil
         };
     }, async function(error, rows) {
@@ -54,11 +73,17 @@ function fetchCSV(){
         await sleep(300);
         clear();
         d3.select('#main-svg').exit();
+        d3.select('#main-svg-distance').exit();
         svg_pupil.select("*").remove();
-        d3.select("#pupil").remove()
-        d3.select("#area_hull").remove()
+        svg_distance.select("*").remove();
+        //d3.select("#")
+        d3.select("#pupil").remove();
+        d3.select("#area_hull").remove();
+        d3.select("#lastPointerDistance").remove();
+        d3.select("#lineDistance").remove();
         svg.selectAll("*").remove();
         d3.select("#controller").selectAll("input").remove();
+        
         renderMyVisualization();
     });
     var participant = document.getElementById("participant").value;
@@ -116,6 +141,26 @@ function plotAxis(gazePointX, gazePointY) {
     .style("font", "7px times")
     .attr("transform", "translate(" + 0 + ", 0)")
     .call(d3.axisLeft(y));
+}
+
+function plotAxisDistance(Distance) {
+    // Add X axis
+    x_distance = d3.scaleLinear()
+    .domain([0, 500])
+    .range([ 0 , width_distance]);
+    svg_distance.append("g")
+    .style("font", "7px times")
+    .attr("transform", "translate(0," + height_distance + ")")
+    .call(d3.axisBottom(x_distance));
+
+    // Add Y axis
+    y_distance = d3.scaleLinear()
+    .domain([0, Math.max(...Distance)])
+    .range([ height_distance, 0-100]);
+    svg_distance.append("g")
+    .style("font", "7px times")
+    .attr("transform", "translate(" + 0 + ", 0)")
+    .call(d3.axisLeft(y_distance));
 }
 
 function plotAll(gazePointX, gazePointY, timestamp, unscaled_avg_pupil, radius, unscaled_radius){
@@ -198,6 +243,38 @@ function redraw_svg(curr_timestamp, timestamp, gazePointX, gazePointY, radius, a
     return index;
 }
 
+function redraw_svg_distance(curr_timestamp, timestamp, distances){
+    var max_distance = Math.max(...distances);
+    var index=0;
+    svg_distance.exit();
+    for(var j = 0; j<timestamp.length; j++) {
+        index=j;
+        if(timestamp[j] >= curr_timestamp){
+            break;
+        }
+    }
+    svg_distance.select("#lastPointerDistance").remove()
+    svg_distance.select("#lineDistance").remove()
+    svg_distance.append("circle")
+        .attr("id", "lastPointerDistance" )
+        .attr("cx", x_distance(400 - distances[index]/max_distance * 300) )
+        .attr("cy", y_distance(250) )
+        .attr("r", 5)
+        .attr("stroke-width", 2)
+        .attr("stroke", "black")
+        .style("fill", "#FF0000")
+    /** */
+    svg_distance.append("line")
+        .attr("id", "lineDistance")
+        .style("stroke", "lightgreen")
+        .style("stroke-width", 3)
+        .attr("x1", x_distance(400))
+        .attr("y1", y_distance(250))
+        .attr("x2", function(d) {return x_distance(400 - distances[index]/max_distance * 300);})//needs to change
+        .attr("y2", y_distance(250)); 
+    return index;
+}
+
 function clear() {
     svg.exit()
     d3.select("#pupil").style("visibility", "hidden")
@@ -206,12 +283,20 @@ function clear() {
     svg.selectAll("line").style("visibility", "hidden")
 }
 
+function clear_distance() {
+    svg_distance.exit()
+    svg_distance.selectAll("*").exit()
+    svg_distance.selectAll("circle").style("visibility", "hidden")
+    //svg_distance.selectAll("line").style("visibility", "hidden")
+}
+
 async function renderMyVisualization() {
     var unscaled_radius = [];
     var gazePointX = [];
     var gazePointY = [];
     var timestamp = [];
     var unscaled_avg_pupil = [];
+    var distances = [];
     sliderPressed = false;
     for (let item in ratData) {
         if(ratData[item].x != null || ratData[item].y != null || ratData[item].r != null) {
@@ -219,14 +304,45 @@ async function renderMyVisualization() {
             gazePointX.push(ratData[item].x);
             gazePointY.push(ratData[item].y);
             timestamp.push(ratData[item].t);
+            distances.push(ratData[item].distance);
             unscaled_avg_pupil.push(ratData[item].p);
         }
     }
     var radius = scale(unscaled_radius, 5, 10);
     var avg_pupil = scale(unscaled_avg_pupil, Math.min(pupil_viz_height,pupil_viz_width)/150, Math.min(pupil_viz_height,pupil_viz_width)/5);
     plotAxis(gazePointX, gazePointY);
+    plotAxisDistance(distances);
     plotAll(gazePointX, gazePointY, timestamp, unscaled_avg_pupil, radius, unscaled_radius);
+    var screen = svg_distance.append('rect')
+            .attr("x", x_distance(400))
+            .attr("y", y_distance(350))
+            .attr("width", 10)
+            .attr("height", 100);
+
+    //Should update eye according to the distance, maximum distance is equal to 60
+    //function(d){return "id_distance"+d.distance;}
+    var eye = svg_distance.append('circle')
+                .data([ratData[0]])
+                .attr("id",  "lastPointerDistance")
+                .attr("cx", x_distance(100))//needs to change
+                .attr("cy", y_distance(250))
+                .attr("r", 5);
     
+     
+    var line = svg_distance.append('line')
+                .data([ratData[0]])
+                .style("stroke", "lightgreen")
+                .style("stroke-width", 3)
+                .attr("id", "lineDistance" )
+                .attr("x1", x_distance(400))
+                .attr("y1", y_distance(250))
+                .attr("x2", x_distance(100))//needs to change
+                .attr("y2", y_distance(250)); 
+
+
+    
+    let max_distance = Math.max(...distances);
+
     var points = gazePointX.map(function(e, i) {
         return [x(e), y(gazePointY[i])];
     });
@@ -243,6 +359,7 @@ async function renderMyVisualization() {
             d3.select('#main-svg').exit();
             d3.select("#controller").select("input").attr("value", this.value);
             redraw_svg(this.value, timestamp, gazePointX, gazePointY, radius, avg_pupil, points); // this has the value of the slider
+            redraw_svg_distance(this.value, timestamp, distances);
         });
     // add a external eye 
     svg_pupil.append("circle").attr("id", "external-eye")
@@ -264,6 +381,9 @@ async function renderMyVisualization() {
     
     d3.select("#transition").on("click", async function() {
         d3.select("#lastPointer").remove()
+        d3.select("#lastPointerDistance").remove()
+        d3.select("#lineDistance").remove()
+
         sliderPressed = true;
         await sleep(500);
         clear();
@@ -296,6 +416,25 @@ async function renderMyVisualization() {
             pupil.transition()
                 .duration(item.r)
                 .attr("r", avg_pupil[i])
+
+            eye.transition()
+            .duration(item.r)
+            .attr("cx", function(d) {return x_distance(400 - item.distance/max_distance * 300);} )
+            .attr("cy", y_distance(250))
+            .attr("r", 5)
+
+            
+            
+            line.transition()
+            .duration(item.r)
+            .style("stroke", "lightgreen")
+                .style("stroke-width", 3)
+                .attr("x1", x_distance(400))
+                .attr("y1", y_distance(250))
+                .attr("x2", function(d) {return x_distance(400 - item.distance/max_distance * 300);})//needs to change
+                .attr("y2", y_distance(250)); 
+            
+
             d3.select("#controller").select("input").attr("value", timestamp[i]);
             svg.select("#lastPointer").raise()
                 .transition()
@@ -303,6 +442,7 @@ async function renderMyVisualization() {
                 .attr("cx", function(d) {return x(item.x);})
                 .attr("cy", function(d) {return y(item.y);})
                 .attr("r", radius[i]);
+            
             await sleep(item.r);
             if(prevT!= null && !sliderPressed) {
                 svg.select("#id"+prevT).style("visibility", "visible");
