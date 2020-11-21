@@ -27,7 +27,6 @@ var svg_pupil = d3.select("#pupil_viz")
 .style("display", "block")
 
 var x, y;
-var line = d3.line().curve(d3.curveLinearClosed);
 var sliderPressed = false;
 
 //Read the data
@@ -56,7 +55,6 @@ function fetchCSV(){
         d3.select('#main-svg').exit();
         svg_pupil.select("*").remove();
         d3.select("#pupil").remove()
-        d3.select("#area_hull").remove()
         svg.selectAll("*").remove();
         d3.select("#controller").selectAll("input").remove();
         renderMyVisualization();
@@ -94,7 +92,7 @@ function display_stats()
     d3.select("#stats").selectAll("span").remove()
     console.log(statsData);
     for(var columnIndex in statsData) {
-        d3.select("#stats").append("span").style("font", "7px times").text(columnIndex + " : " + statsData[columnIndex] + ". ");
+        d3.select("#stats").append("span").style("font", "12px times").text(columnIndex + " : " + statsData[columnIndex] + ". ");
     }
 }
 
@@ -104,7 +102,7 @@ function plotAxis(gazePointX, gazePointY) {
     .domain([0, 1280])
     .range([ 0 , width]);
     svg.append("g")
-    .style("font", "7px times")
+    .style("font", "15px times")
     .attr("transform", "translate(0," + height + ")")
     .call(d3.axisBottom(x));
 
@@ -113,7 +111,7 @@ function plotAxis(gazePointX, gazePointY) {
     .domain([0, 1152])
     .range([ height, 0-100]);
     svg.append("g")
-    .style("font", "7px times")
+    .style("font", "15px times")
     .attr("transform", "translate(" + 0 + ", 0)")
     .call(d3.axisLeft(y));
 }
@@ -149,8 +147,6 @@ function plotAll(gazePointX, gazePointY, timestamp, unscaled_avg_pupil, radius, 
             .attr("x2", x(gazePointX[index-1]))
             .attr("y2", y(gazePointY[index-1]))
     }
-    
-    svg.append("path").lower().attr("id", "area_hull").attr("visibility", "hidden");
 }
 
 function scale(arr, minEl, maxEl) {
@@ -166,7 +162,7 @@ function scale(arr, minEl, maxEl) {
   return result;
 }
 
-function redraw_svg(curr_timestamp, timestamp, gazePointX, gazePointY, radius, avg_pupil, points){
+function redraw_svg(curr_timestamp, timestamp, gazePointX, gazePointY, radius, avg_pupil){
     var index=0;
     svg.exit();
     for(var j = 0; j<timestamp.length; j++) {
@@ -187,14 +183,7 @@ function redraw_svg(curr_timestamp, timestamp, gazePointX, gazePointY, radius, a
         .attr("r", radius[index])
         .attr("stroke-width", 2)
         .attr("stroke", "black")
-        .style("fill", "#FF0000");
-    
-    if(index>3) {
-        var hull = d3.polygonHull(points.slice(0,index+1));
-        svg.select("#area_hull").attr("fill", "#CBCBCB").style("opacity", 0.5).attr("d", line(hull)).attr("visibility", "visible"); 
-    } else {
-        svg.select("#area_hull").attr("visibility", "hidden");
-    }
+        .style("fill", "#FF0000")
     return index;
 }
 
@@ -205,6 +194,8 @@ function clear() {
     svg.selectAll("circle").style("visibility", "hidden")
     svg.selectAll("line").style("visibility", "hidden")
 }
+
+
 
 async function renderMyVisualization() {
     var unscaled_radius = [];
@@ -227,22 +218,19 @@ async function renderMyVisualization() {
     plotAxis(gazePointX, gazePointY);
     plotAll(gazePointX, gazePointY, timestamp, unscaled_avg_pupil, radius, unscaled_radius);
     
-    var points = gazePointX.map(function(e, i) {
-        return [x(e), y(gazePointY[i])];
-    });
-
     // add a slider
     var slider = d3.select("#controller").append("input")
         .attr("type", "range")
         .attr("min",  Math.min.apply(Math, timestamp))
         .attr("max", Math.max.apply(Math, timestamp))
-        .style("width", "100%")
+        .style("width", "95%")
+        .style("height", "50%")
         .attr("value", timestamp[0])
         .on("input", function() { 
             sliderPressed = true;
             d3.select('#main-svg').exit();
             d3.select("#controller").select("input").attr("value", this.value);
-            redraw_svg(this.value, timestamp, gazePointX, gazePointY, radius, avg_pupil, points); // this has the value of the slider
+            redraw_svg(this.value, timestamp, gazePointX, gazePointY, radius, avg_pupil); // this has the value of the slider
         });
     // add a external eye 
     svg_pupil.append("circle").attr("id", "external-eye")
@@ -260,22 +248,23 @@ async function renderMyVisualization() {
     .attr("cx", pupil_viz_width/2 )
     .attr("cy", pupil_viz_height/2 )
     .attr("fill", "black")
-    .attr("visibility", "hidden");
+    .attr("visibility", "hidden")
     
     d3.select("#transition").on("click", async function() {
-        d3.select("#lastPointer").remove()
         sliderPressed = true;
         await sleep(500);
         clear();
         plotAxis(gazePointX, gazePointY);
         sliderPressed = false;
         // add the first dot to start transition
+      
+
         var circle = svg.append('g')
             .selectAll("dot").raise()
             .data([ratData[0]])
             .enter()
             .append("circle")
-            .attr("id", function(d){return "lastPointer";} )
+            .attr("id", function(d){return "id"+d.t;} )
             .attr("cx", function(d){return x(d.x);} )
             .attr("cy", function(d){return y(d.y);}  )
             .attr("r", 3.0)
@@ -286,9 +275,9 @@ async function renderMyVisualization() {
             .text(function(d) { return "X: " + d.x + " Y: " + d.y + " Duration: " + d.r; });
         svg_pupil.select("#external-eye").style("visibility", "visible")
         pupil.style("visibility", "visible")
+        
         var prevT = null;
         var i = 0;
-        svg.select("#area_hull").attr("visibility", "hidden");
         for (let item of ratData){
             if(sliderPressed){
                 break;
@@ -297,7 +286,7 @@ async function renderMyVisualization() {
                 .duration(item.r)
                 .attr("r", avg_pupil[i])
             d3.select("#controller").select("input").attr("value", timestamp[i]);
-            svg.select("#lastPointer").raise()
+            circle.raise()
                 .transition()
                 .duration(item.r)
                 .attr("cx", function(d) {return x(item.x);})
@@ -307,9 +296,6 @@ async function renderMyVisualization() {
             if(prevT!= null && !sliderPressed) {
                 svg.select("#id"+prevT).style("visibility", "visible");
                 svg.select("#lineId"+prevT).style("visibility", "visible");
-            }
-            if(i>3) {
-                svg.select("#area_hull").attr("fill", "#CBCBCB").style("opacity", 0.5).attr("d", line(d3.polygonHull(points.slice(0,i)))).attr("visibility", "visible"); 
             }
             prevT = item.t;
             i++;

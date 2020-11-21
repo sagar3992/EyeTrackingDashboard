@@ -1,6 +1,15 @@
+
+.header{
+  grid-area: hd;
+  background-color: #668fb1;
+
+}
+
 .grid-container {
     display: grid;
-    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    position: center;
     grid-template-areas:
       'header header header header header header'
       'menu main main main right right'
@@ -8,25 +17,46 @@
     grid-gap: 10px;
     background-color: #668fb1;
     padding: 100px;
-  }
+}
   
-  .grid-container > div {
-    background-color: rgba(255, 255, 255, 0.8);
+.grid-container > div {
+    background-color: rgba(252, 250, 250, 0.8);
     text-align: center;
-    padding: 20px 0;
+    padding: 40px 0;
     font-size: 30px;
-  }
+}
 
-  #treeOrGraph{
+.axis text{
+  font-size: 200px;
+}
+
+
+#display{
+  padding: 1px;
+  width: 100%;
+}
+
+#treeOrGraph{
     text-align: center;
     margin: 10px 0;
     display: inline;
-  }
+}
 
-  body{
+#controller{
+      text-align: middle; 
+      width: 100%;
+      height: 40px;
+      border-radius: 80px;
+}
+
+body{
+    justify-content: center;
       text-align: center;
       margin: 100px 0;
-  }
+}
 
+  footer{
+    background-color: black;
+}
 
   
