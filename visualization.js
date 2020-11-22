@@ -92,7 +92,7 @@ function display_stats()
     d3.select("#stats").selectAll("span").remove()
     console.log(statsData);
     for(var columnIndex in statsData) {
-        d3.select("#stats").append("span").style("font", "12px times").text(columnIndex + " : " + statsData[columnIndex] + ". ");
+        d3.select("#stats").append("span").style("font", "24px times").text(columnIndex + ": " + statsData[columnIndex] + ". ");
     }
 }
 

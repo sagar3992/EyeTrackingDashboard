@@ -51,12 +51,34 @@
 
 body{
     justify-content: center;
-      text-align: center;
-      margin: 100px 0;
+    text-align: center;
+    margin: 100px 0;
+    background-color: rgb(240, 230, 230);
 }
 
-  footer{
-    background-color: black;
-}
+ #pupil_viz{
+   box-sizing: content-box;
+   
+ }
 
-  
+ #main{
+   box-sizing: border-box;
+ }
+
+ #stats{
+   text-align: center;
+   word-wrap: keep all;
+ }
+
+.zoom {
+  padding: 50px;
+  transition: transform .2s; /* Animation */
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+}
+/* */
+.zoom:hover {
+  transform: scale(1.1); /* (120% zoom)*/
+  background-color:  rgba(252, 250, 250, 0.9);
+}
