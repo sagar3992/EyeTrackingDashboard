@@ -329,7 +329,7 @@ async function renderMyVisualization() {
                 .attr("r", 5);
     
      
-    var line = svg_distance.append('line')
+    var line_distance = svg_distance.append('line')
                 .data([ratData[0]])
                 .style("stroke", "lightgreen")
                 .style("stroke-width", 3)
@@ -381,8 +381,7 @@ async function renderMyVisualization() {
     
     d3.select("#transition").on("click", async function() {
         d3.select("#lastPointer").remove()
-        d3.select("#lastPointerDistance").remove()
-        d3.select("#lineDistance").remove()
+        redraw_svg_distance(0, timestamp, distances)
 
         sliderPressed = true;
         await sleep(500);
@@ -417,7 +416,7 @@ async function renderMyVisualization() {
                 .duration(item.r)
                 .attr("r", avg_pupil[i])
 
-            eye.transition()
+            svg_distance.select('#lastPointerDistance').transition()
             .duration(item.r)
             .attr("cx", function(d) {return x_distance(400 - item.distance/max_distance * 300);} )
             .attr("cy", y_distance(250))
@@ -425,7 +424,7 @@ async function renderMyVisualization() {
 
             
             
-            line.transition()
+            svg_distance.select('#lineDistance').transition()
             .duration(item.r)
             .style("stroke", "lightgreen")
                 .style("stroke-width", 3)
